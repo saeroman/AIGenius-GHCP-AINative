@@ -5,12 +5,13 @@ import os
 from pathlib import Path
 from typing import Protocol
 
-from azure.data.tables import TableServiceClient
+from azure.data.tables import TableServiceClient, UpdateMode
 from dotenv import load_dotenv
 
 
 TABLE_NAME = "tasks"
 PARTITION_KEY = "tasks"
+DEFAULT_TASKS_FILE = Path(__file__).resolve().with_name("tasks.json")
 
 
 class StorageError(Exception):
@@ -76,7 +77,7 @@ class AzureTableStorage:
                 task["tags"] = json.loads(task.get("tags", "[]"))
                 task.setdefault("due_date", None)
                 tasks.append(task)
-            return tasks
+            return sorted(tasks, key=lambda task: task["id"])
         except Exception as error:
             raise StorageError("Could not load tasks from Azure Table Storage.") from error
 
@@ -95,7 +96,7 @@ class AzureTableStorage:
                     if key == "id" or value is None:
                         continue
                     entity[key] = json.dumps(value) if key == "tags" else value
-                self.table_client.upsert_entity(entity=entity)
+                self.table_client.upsert_entity(entity=entity, mode=UpdateMode.REPLACE)
             for entity in existing_entities:
                 if entity["RowKey"] not in task_ids:
                     self.table_client.delete_entity(
@@ -105,7 +106,7 @@ class AzureTableStorage:
             raise StorageError("Could not save tasks to Azure Table Storage.") from error
 
 
-def get_storage(local_path: Path) -> TaskStorage:
+def get_storage(local_path: Path = DEFAULT_TASKS_FILE) -> TaskStorage:
     """Return Azure storage when configured, otherwise local JSON storage."""
     load_dotenv()
     connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
