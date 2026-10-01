@@ -17,7 +17,6 @@ GitHub Copilot을 활용한 AI 네이티브 워크플로우 확장을 보여주�
     python app.py stats
 """
 
-import json
 import re
 import sys
 from datetime import date, datetime
@@ -27,6 +26,8 @@ import click
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
+
+from storage import StorageError, get_storage
 
 TASKS_FILE = Path(__file__).resolve().with_name("tasks.json")
 
@@ -42,32 +43,29 @@ console = Console()
 
 
 def load_tasks() -> list[dict]:
-    """JSON 저장 파일에서 작업을 불러옵니다.
+    """현재 저장소에서 작업을 불러옵니다.
 
     반환값:
-        작업 딕셔너리 목록입니다. 파일이 없거나 파싱할 수 없으면 빈 목록을 반환합니다.
+        작업 딕셔너리 목록입니다.
     """
-    if not TASKS_FILE.exists():
-        return []
     try:
-        with TASKS_FILE.open("r", encoding="utf-8") as f:
-            data = json.load(f)
-        if not isinstance(data, list):
-            raise ValueError("tasks file must contain a JSON array")
-        return data
-    except (json.JSONDecodeError, OSError, ValueError):
-        console.print("[red]Warning: Could not read tasks file. Starting fresh.[/red]")
-        return []
+        return get_storage(TASKS_FILE).load()
+    except StorageError as error:
+        console.print(f"[red]Error: {error}[/red]")
+        sys.exit(1)
 
 
 def save_tasks(tasks: list[dict]) -> None:
-    """작업을 JSON 저장 파일에 저장합니다.
+    """현재 저장소에 작업을 저장합니다.
 
     인수:
         tasks: 저장할 작업 딕셔너리 목록입니다.
     """
-    with TASKS_FILE.open("w", encoding="utf-8") as f:
-        json.dump(tasks, f, indent=2)
+    try:
+        get_storage(TASKS_FILE).save(tasks)
+    except StorageError as error:
+        console.print(f"[red]Error: {error}[/red]")
+        sys.exit(1)
 
 
 def next_id(tasks: list[dict]) -> int:
