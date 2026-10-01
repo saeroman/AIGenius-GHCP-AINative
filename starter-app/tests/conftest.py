@@ -5,18 +5,19 @@ from pathlib import Path
 
 import pytest
 
-import app
+import storage
 
 
 @pytest.fixture(autouse=True)
 def isolated_tasks_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """Point TASKS_FILE at a temporary file for each test.
+    """Point local storage at a temporary file and disable Azure for each test.
 
     Returns:
         The Path to the temporary tasks file.
     """
     tasks_file = tmp_path / "tasks.json"
-    monkeypatch.setattr(app, "TASKS_FILE", tasks_file)
+    monkeypatch.setattr(storage, "TASKS_FILE", tasks_file)
+    monkeypatch.delenv("AZURE_STORAGE_CONNECTION_STRING", raising=False)
     return tasks_file
 
 
