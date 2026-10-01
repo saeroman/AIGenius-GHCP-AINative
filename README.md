@@ -58,12 +58,14 @@ IDEA
    ```bash
    cd starter-app
    pip install -r requirements.txt
+   export AZURE_STORAGE_CONNECTION_STRING="<your Azure Storage connection string>"
    python app.py add "Deploy the API" --priority high --due 2025-12-31 --tag work
    python app.py add "Buy coffee" --priority low --tag personal
    python app.py list
    python app.py search "keyword"
    python app.py stats
    ```
+   Azure 연결 문자열을 설정하면 태스크는 Azure Table Storage의 `tasks` 테이블에 저장됩니다. 연결 문자열이 없으면 기존 로컬 JSON 저장소를 사용합니다.
 
 4. **GitHub Copilot App** 을 열고 포크한 Repo에 연결하세요.
 
