@@ -17,6 +17,7 @@ def isolated_tasks_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path
     """
     tasks_file = tmp_path / "tasks.json"
     monkeypatch.setattr(app, "TASKS_FILE", tasks_file)
+    monkeypatch.delenv("AZURE_STORAGE_CONNECTION_STRING", raising=False)
     return tasks_file
 
 
