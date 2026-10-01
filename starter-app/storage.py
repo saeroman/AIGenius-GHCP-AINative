@@ -15,9 +15,11 @@ class TaskStorage(Protocol):
 
     def load(self) -> list[dict]:
         """Return all stored tasks."""
+        ...
 
     def save(self, tasks: list[dict]) -> None:
         """Replace all stored tasks."""
+        ...
 
 
 class StorageError(Exception):
@@ -99,9 +101,9 @@ class AzureTableStorage:
 
             for task in tasks:
                 entity = {
+                    **task,
                     "PartitionKey": self.partition_key,
                     "RowKey": str(task["id"]),
-                    **task,
                     "tags": json.dumps(task.get("tags", [])),
                 }
                 self.table_client.upsert_entity(entity=entity, mode=UpdateMode.REPLACE)
@@ -109,10 +111,11 @@ class AzureTableStorage:
             raise StorageError("Could not save tasks to Azure Table Storage.") from error
 
 
-def get_storage() -> TaskStorage:
+def get_storage(local_path: Path | None = None) -> TaskStorage:
     """Return Azure storage when configured, or local JSON storage otherwise."""
     load_dotenv()
     connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
     if connection_string:
         return AzureTableStorage(connection_string)
-    return LocalStorage(Path(__file__).resolve().with_name("tasks.json"))
+    path = local_path or Path(__file__).resolve().with_name("tasks.json")
+    return LocalStorage(path)

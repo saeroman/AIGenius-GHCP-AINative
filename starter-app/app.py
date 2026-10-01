@@ -49,7 +49,7 @@ def load_tasks() -> list[dict]:
         작업 딕셔너리 목록입니다.
     """
     try:
-        return get_storage().load()
+        return get_storage(TASKS_FILE).load()
     except StorageError as error:
         console.print(f"[red]Error: {error}[/red]")
         sys.exit(1)
@@ -62,7 +62,7 @@ def save_tasks(tasks: list[dict]) -> None:
         tasks: 저장할 작업 딕셔너리 목록입니다.
     """
     try:
-        get_storage().save(tasks)
+        get_storage(TASKS_FILE).save(tasks)
     except StorageError as error:
         console.print(f"[red]Error: {error}[/red]")
         sys.exit(1)
